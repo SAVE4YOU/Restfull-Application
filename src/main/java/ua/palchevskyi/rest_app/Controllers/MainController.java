@@ -1,65 +1,52 @@
 package ua.palchevskyi.rest_app.Controllers;
 
+import com.fasterxml.jackson.annotation.JsonView;
+import org.springframework.beans.BeanUtils;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
-import ua.palchevskyi.rest_app.Exceptions.NotFoundException;
+import ua.palchevskyi.rest_app.Entity.Message;
+import ua.palchevskyi.rest_app.Entity.Views;
+import ua.palchevskyi.rest_app.Repos.DataRepository;
 
-import java.util.ArrayList;
-import java.util.HashMap;
+import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Map;
 
 @RestController
 @RequestMapping("/messages")
 public class MainController {
+    private DataRepository dataRepository;
 
-    private List<Map<String,String>> messages = new ArrayList<Map<String,String>>(){{
-        add(new HashMap<String,String>(){{
-            put("id","1");
-            put("message", "Hello, this is test message");
-        }});
-        add(new HashMap<String,String>(){{
-            put("id","2");
-            put("message", "Hello, this is the second message");
-        }});
-    }};
-
-    private int size = messages.size()+1;
-
-    public Map<String,String> getMessage(String id){
-        return messages.stream()
-                .filter(message -> message.get("id").equals(id))
-                .findFirst()
-                .orElseThrow(NotFoundException::new);
+    @Autowired
+    public MainController(DataRepository dataRepository){
+        this.dataRepository = dataRepository;
     }
 
     @GetMapping
-    public List<Map<String,String>> getAllMessages(){
-        return messages;
+    @JsonView(Views.IdName.class)
+    public List<Message> getAllMessages(){
+        return dataRepository.findAll();
     }
 
     @GetMapping("{id")
-    public Map<String,String> getMessageById(@PathVariable String id){
-        return getMessage(id);
-    }
-
-    @PostMapping
-    public Map<String,String> createMessage(@RequestBody Map<String, String> message){
-        message.put("id", String.valueOf(size++));
-        messages.add(message);
+    @JsonView(Views.FullMessage.class)
+    public Message getMessageById(@PathVariable("id") Message message){
         return message;
     }
 
-    @PutMapping("{id}")
-    public Map<String,String> editMessage(@PathVariable String id, @RequestBody Map<String,String> message){
-        Map<String, String> messageFromDb = getMessage(id);
-        messageFromDb.putAll(message);
-        messageFromDb.put("id", id);
+    @PostMapping
+    public Message createMessage(@RequestBody Message message){
+        message.setCreationDate(LocalDateTime.now());
+        return dataRepository.save(message);
+    }
 
-        return messageFromDb;
+    @PutMapping("{id}")
+    public Message editMessage(@PathVariable("id") Message messageFromDb, @RequestBody Message message){
+        BeanUtils.copyProperties(message,messageFromDb,"id");
+        return dataRepository.save(messageFromDb);
     }
 
     @DeleteMapping("{id}")
-    public void deleteMessage(@PathVariable String id){
-        messages.remove(getMessage(id));
+    public void deleteMessage(@PathVariable("id") Message message){
+        dataRepository.delete(message);
     }
 }
