@@ -1,19 +1,19 @@
 package ua.palchevskyi.rest_app.Controllers;
 
-import com.fasterxml.jackson.annotation.JsonView;
-import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.*;
-import ua.palchevskyi.rest_app.Entity.Message;
-import ua.palchevskyi.rest_app.Entity.Views;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import ua.palchevskyi.rest_app.Entity.User;
 import ua.palchevskyi.rest_app.Repos.DataRepository;
 
-import java.time.LocalDateTime;
-import java.util.List;
+import java.util.HashMap;
 
-@RestController
-@RequestMapping("/messages")
-public class MainController {
+@Controller
+@RequestMapping("/")
+public class MainController{
     private DataRepository dataRepository;
 
     @Autowired
@@ -22,31 +22,13 @@ public class MainController {
     }
 
     @GetMapping
-    @JsonView(Views.IdName.class)
-    public List<Message> getAllMessages(){
-        return dataRepository.findAll();
-    }
+    public String viewMain(Model model, @AuthenticationPrincipal User user){
+        HashMap<Object, Object> data = new HashMap<>();
 
-    @GetMapping("{id")
-    @JsonView(Views.FullMessage.class)
-    public Message getMessageById(@PathVariable("id") Message message){
-        return message;
-    }
+        data.put("profile", user);
+        data.put("messages", dataRepository.findAll());
 
-    @PostMapping
-    public Message createMessage(@RequestBody Message message){
-        message.setCreationDate(LocalDateTime.now());
-        return dataRepository.save(message);
-    }
-
-    @PutMapping("{id}")
-    public Message editMessage(@PathVariable("id") Message messageFromDb, @RequestBody Message message){
-        BeanUtils.copyProperties(message,messageFromDb,"id");
-        return dataRepository.save(messageFromDb);
-    }
-
-    @DeleteMapping("{id}")
-    public void deleteMessage(@PathVariable("id") Message message){
-        dataRepository.delete(message);
+        model.addAttribute("frontendData", data);
+        return "index";
     }
 }
