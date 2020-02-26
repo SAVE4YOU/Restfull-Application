@@ -8,7 +8,7 @@ import java.io.Serializable;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name="users")
+@Table(name = "users")
 @Data
 public class User implements Serializable{
     @Id
@@ -18,6 +18,6 @@ public class User implements Serializable{
     private String email;
     private String gender;
     private String locale;
-    @JsonFormat(shape=JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm:SS")
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm:SS")
     private LocalDateTime lastVisit;
 }
